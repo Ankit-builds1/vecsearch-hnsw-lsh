@@ -56,3 +56,18 @@
   HNSW is ~2x faster than brute force with recall 0.998 while computing ~1% of the distances.
 - Issue found + fixed: the first run had noisy single-shot timings and stopped at n=10K. Now best of 3
   repeats, and scaling goes to 50K.
+
+## Stage 6 - Streamlit demo (done)
+- `app/search_engine.py` (backend, no UI) + `app/streamlit_app.py` (UI).
+- Corpus: first 5,000 headlines of the AG News test set (downloaded OK). Embeddings:
+  sentence-transformers all-MiniLM-L6-v2 (384-d). Fallbacks implemented (synthetic headlines,
+  offline hashing embedder) but not needed.
+- Sidebar: switch HNSW / LSH / BruteForce, k, ef_search; table comparing time + recall of all three.
+- Embeddings and indexes cached in `app/cache/` using our own save/load (HNSW loads in 0.02 s
+  instead of ~40 s rebuild).
+- Fixes during testing: AG News `#39;` entities cleaned; single-shot timings replaced by median of 5;
+  LSH config tuned by measurement on the real embeddings (L=12,K=10 gave recall 0.64 ->
+  L=32,K=10 gives 0.91; HNSW gives 0.995). Cache folder names now include index params.
+- Verified in the browser: app launches, no server errors, queries return relevant results.
+  Screenshots in `docs/screenshots/`.
+- Tests: `tests/test_search_engine.py` (offline embedder). Total 94 tests passing.
