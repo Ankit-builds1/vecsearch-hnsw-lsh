@@ -1,0 +1,14 @@
+# Requirements for the deployed demo app (Streamlit Community Cloud).
+# Streamlit Cloud uses this file because it sits next to streamlit_app.py.
+# The full requirements.txt in the project root also has FAISS, Jupyter, etc.
+# which the app does not need.
+
+# CPU-only PyTorch: the default Linux build pulls ~2.5 GB of CUDA libraries
+--extra-index-url https://download.pytorch.org/whl/cpu
+torch
+
+numpy>=1.26
+pandas>=2.1
+altair>=5
+streamlit>=1.35
+sentence-transformers>=2.7
