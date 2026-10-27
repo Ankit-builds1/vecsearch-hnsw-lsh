@@ -63,6 +63,7 @@ class HNSWIndex(BaseIndex):
         keep_pruned: bool = True,
         seed: int = 42,
     ) -> None:
+        """Validate parameters and create an empty graph. O(1)."""
         super().__init__(dim, metric)
         if M < 2:
             raise ValueError("M must be at least 2")
@@ -307,7 +308,10 @@ class HNSWIndex(BaseIndex):
 
     def _search(self, q: np.ndarray, ef: int, trace: list[tuple[int, int]] | None = None,
                 visited_out: list[int] | None = None) -> list[tuple[float, int]]:
-        """Shared search routine (greedy on upper layers, beam on layer 0)."""
+        """Shared search routine (greedy on upper layers, beam on layer 0).
+
+        Time: O(log n * M * d + ef * M * d)   Space: O(ef + visited).
+        """
         assert self._entry is not None
         ep = self._entry
         ep_d = self._dists(q, [ep])[0]
@@ -319,6 +323,8 @@ class HNSWIndex(BaseIndex):
 
     def search_with_trace(self, query: np.ndarray, k: int = 10, ef: int | None = None) -> dict[str, Any]:
         """Like ``search`` but also returns the path taken (for visualization).
+
+        Time: same as ``search``, O(log n * M * d + ef * M * d). Space: O(ef + visited).
 
         Returns a dict with:
             ids, distances: the results (internal positions == ids if default ids used)
@@ -342,12 +348,12 @@ class HNSWIndex(BaseIndex):
     # ================================================================ introspection
     @property
     def max_level(self) -> int:
-        """Highest layer in the graph (-1 when empty)."""
+        """Highest layer in the graph (-1 when empty). O(1)."""
         return self._max_level
 
     @property
     def entry_point(self) -> int | None:
-        """Internal position of the entry point node."""
+        """Internal position of the entry point node. O(1)."""
         return self._entry
 
     def layer_edges(self, layer: int) -> list[tuple[int, int]]:
@@ -372,6 +378,7 @@ class HNSWIndex(BaseIndex):
 
     # ================================================================ persistence
     def _get_state(self) -> dict[str, Any]:
+        """Params, vectors/ids and the graph (layers, levels, entry, RNG state). O(n * d)."""
         return {
             "params": {
                 "dim": self.dim,
@@ -393,6 +400,7 @@ class HNSWIndex(BaseIndex):
         }
 
     def _set_state(self, state: dict[str, Any]) -> None:
+        """Restore vectors and graph saved by ``_get_state``. O(n * d)."""
         arrays, extra = state["arrays"], state["extra"]
         self._store.append(arrays["vectors"].astype(np.float32))
         self._ids = [int(i) for i in arrays["ids"]]

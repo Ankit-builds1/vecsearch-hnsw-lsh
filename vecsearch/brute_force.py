@@ -31,6 +31,7 @@ class BruteForceIndex(BaseIndex):
     """
 
     def __init__(self, dim: int, metric: str = "l2", use_heap: bool = False) -> None:
+        """Create an empty flat index. O(1)."""
         super().__init__(dim, metric)
         self.use_heap = use_heap
 
@@ -73,6 +74,7 @@ class BruteForceIndex(BaseIndex):
         return ids, dists[pos].astype(np.float32)
 
     def _get_state(self) -> dict[str, Any]:
+        """Params plus the vectors and ids. O(n * d) for the copy."""
         return {
             "params": {"dim": self.dim, "metric": self.metric, "use_heap": self.use_heap},
             "arrays": {"vectors": self.vectors.copy(), "ids": self.ids},
@@ -80,6 +82,7 @@ class BruteForceIndex(BaseIndex):
         }
 
     def _set_state(self, state: dict[str, Any]) -> None:
+        """Restore vectors and ids saved by ``_get_state``. O(n * d)."""
         arrays = state["arrays"]
         self._store.append(arrays["vectors"].astype(np.float32))
         self._ids = [int(i) for i in arrays["ids"]]

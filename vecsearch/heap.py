@@ -176,6 +176,7 @@ class _BinaryHeap(Generic[T]):
         return ((s * k, v) for k, v in self._data)
 
     def __repr__(self) -> str:
+        """Short description like ``MinHeap(size=3)``. O(1)."""
         return f"{type(self).__name__}(size={len(self)})"
 
 

@@ -49,11 +49,12 @@ class VectorStore:
         return self._buf[: self._n]
 
     def __len__(self) -> int:
+        """Number of stored rows. O(1)."""
         return self._n
 
 
 class BaseIndex(ABC):
-    """Abstract vector index.
+    """Abstract vector index. Stores vectors in a VectorStore: O(n * d) space.
 
     Subclasses must implement ``add`` and ``search`` plus the two state hooks
     used by persistence. Results are always returned as two arrays
@@ -104,6 +105,7 @@ class BaseIndex(ABC):
 
     @staticmethod
     def _empty_result() -> tuple[np.ndarray, np.ndarray]:
+        """Empty (ids, distances) pair returned for an empty index or k <= 0. O(1)."""
         return np.empty(0, dtype=np.int64), np.empty(0, dtype=np.float32)
 
     @property
@@ -119,11 +121,17 @@ class BaseIndex(ABC):
     # ---------------------------------------------------------------- API
     @abstractmethod
     def add(self, vectors: np.ndarray, ids: np.ndarray | list[int] | None = None) -> None:
-        """Insert vectors (m, d) with optional external integer ids."""
+        """Insert vectors (m, d) with optional external integer ids.
+
+        Cost depends on the index: O(m * d) for brute force up to
+        O(m * log n * ef_construction * M * d) for HNSW.
+        """
 
     @abstractmethod
     def search(self, query: np.ndarray, k: int = 10) -> tuple[np.ndarray, np.ndarray]:
         """Return ``(ids, distances)`` of the k nearest neighbours of ``query``.
+
+        Cost depends on the index: O(n * d) for brute force, much less for LSH / HNSW.
 
         If the index has fewer than k items, fewer results are returned.
         """
@@ -143,26 +151,27 @@ class BaseIndex(ABC):
         return len(self._ids)
 
     def __repr__(self) -> str:
+        """Short description, e.g. ``HNSWIndex(dim=128, metric='l2', size=10000)``. O(1)."""
         return f"{type(self).__name__}(dim={self.dim}, metric={self.metric!r}, size={len(self)})"
 
     # ---------------------------------------------------------------- persistence
     @abstractmethod
     def _get_state(self) -> dict[str, Any]:
-        """Return everything needed to rebuild the index (arrays + plain python)."""
+        """Return everything needed to rebuild the index (arrays + plain python). O(n * d)."""
 
     @abstractmethod
     def _set_state(self, state: dict[str, Any]) -> None:
-        """Restore the index from a dict produced by ``_get_state``."""
+        """Restore the index from a dict produced by ``_get_state``. O(n * d)."""
 
     def save(self, path: str | Path) -> Path:
-        """Save the index to a folder. See ``vecsearch.persistence``."""
+        """Save the index to a folder. See ``vecsearch.persistence``. O(n * d + graph size)."""
         from .persistence import save_index
 
         return save_index(self, path)
 
     @classmethod
     def load(cls, path: str | Path) -> "BaseIndex":
-        """Load an index previously written by ``save``."""
+        """Load an index previously written by ``save``. O(n * d + graph size)."""
         from .persistence import load_index
 
         index = load_index(path)

@@ -32,7 +32,7 @@ STRUCTURE = "structure.pkl"
 
 
 def _registry() -> dict[str, type["BaseIndex"]]:
-    """Map class names to classes (imported here to avoid circular imports)."""
+    """Map class names to classes (imported here to avoid circular imports). O(1)."""
     from .brute_force import BruteForceIndex
     from .hnsw import HNSWIndex
     from .lsh import LSHIndex

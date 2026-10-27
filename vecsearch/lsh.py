@@ -58,6 +58,7 @@ class LSHIndex(BaseIndex):
         center: bool = True,
         seed: int = 42,
     ) -> None:
+        """Draw the random hyperplanes and create empty tables. O(L * K * d) time and space."""
         super().__init__(dim, metric)
         if n_tables <= 0 or n_bits <= 0:
             raise ValueError("n_tables and n_bits must be positive")
@@ -168,6 +169,7 @@ class LSHIndex(BaseIndex):
 
     # ---------------------------------------------------------------- persistence
     def _get_state(self) -> dict[str, Any]:
+        """Params, arrays (vectors, ids, planes, mean) and bucket tables. O(n * d) for the copy."""
         arrays = {"vectors": self.vectors.copy(), "ids": self.ids, "planes": self._planes}
         if self._mean is not None:
             arrays["mean"] = self._mean
@@ -186,6 +188,7 @@ class LSHIndex(BaseIndex):
         }
 
     def _set_state(self, state: dict[str, Any]) -> None:
+        """Restore vectors, planes and buckets saved by ``_get_state``. O(n * d)."""
         arrays = state["arrays"]
         self._store.append(arrays["vectors"].astype(np.float32))
         self._ids = [int(i) for i in arrays["ids"]]
