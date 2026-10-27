@@ -9,7 +9,8 @@ Indexes:
 from .base import BaseIndex
 from .brute_force import BruteForceIndex
 from .heap import MaxHeap, MinHeap
+from .hnsw import HNSWIndex
 from .lsh import LSHIndex
 
-__all__ = ["BaseIndex", "BruteForceIndex", "LSHIndex", "MaxHeap", "MinHeap"]
+__all__ = ["BaseIndex", "BruteForceIndex", "HNSWIndex", "LSHIndex", "MaxHeap", "MinHeap"]
 __version__ = "0.1.0"

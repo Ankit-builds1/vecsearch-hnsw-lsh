@@ -7,9 +7,12 @@ The heap is stored in a plain python list, using the usual array layout:
     right(i)  = 2 * i + 2
 
 Every entry is a ``(key, item)`` pair. ``MinHeap`` keeps the smallest key on
-top and ``MaxHeap`` keeps the largest key on top. Internally ``MaxHeap`` is
-just a ``MinHeap`` that compares with the opposite sign, so both share the
-same sift-up / sift-down code.
+top and ``MaxHeap`` keeps the largest key on top.
+
+Implementation trick: both heaps share one min-heap implementation. A
+MaxHeap stores ``-key`` internally and flips the sign back when returning,
+so the sift loops are just plain ``<`` comparisons (this matters a lot for
+speed in Python, since HNSW does millions of heap operations).
 
 These are used for:
   * top-k selection (keep a MaxHeap of size k, pop the worst when it overflows)
@@ -26,7 +29,7 @@ T = TypeVar("T")
 
 
 class _BinaryHeap(Generic[T]):
-    """Array-backed binary heap. Smaller ``_sign * key`` goes on top.
+    """Array-backed binary min-heap over ``_sign * key``.
 
     Space: O(n) for n stored entries.
     """
@@ -39,52 +42,53 @@ class _BinaryHeap(Generic[T]):
         Building from items uses bottom-up heapify.
         Time: O(n)   Space: O(n).
         """
+        s = self._sign
         self._data: list[tuple[float, T]] = []
         if items is not None:
-            self._data = [(float(k), v) for k, v in items]
+            self._data = [(s * float(k), v) for k, v in items]
             for i in range(len(self._data) // 2 - 1, -1, -1):
                 self._sift_down(i)
 
     # ------------------------------------------------------------ helpers
-    def _less(self, i: int, j: int) -> bool:
-        """True if entry i should sit above entry j. O(1)."""
-        return self._sign * self._data[i][0] < self._sign * self._data[j][0]
-
-    def _swap(self, i: int, j: int) -> None:
-        """Swap two entries. O(1)."""
-        self._data[i], self._data[j] = self._data[j], self._data[i]
-
     def _sift_up(self, i: int) -> None:
-        """Move entry i up until the heap property holds.
+        """Move entry i up until its parent is not bigger.
 
         Time: O(log n)   Space: O(1).
         """
+        data = self._data
+        entry = data[i]
+        key = entry[0]
         while i > 0:
-            parent = (i - 1) // 2
-            if self._less(i, parent):
-                self._swap(i, parent)
+            parent = (i - 1) >> 1
+            if key < data[parent][0]:
+                data[i] = data[parent]  # shift parent down, place entry at the end
                 i = parent
             else:
                 break
+        data[i] = entry
 
     def _sift_down(self, i: int) -> None:
-        """Move entry i down until the heap property holds.
+        """Move entry i down until both children are not smaller.
 
         Time: O(log n)   Space: O(1).
         """
-        n = len(self._data)
+        data = self._data
+        n = len(data)
+        entry = data[i]
+        key = entry[0]
         while True:
-            left = 2 * i + 1
-            right = left + 1
-            best = i
-            if left < n and self._less(left, best):
-                best = left
-            if right < n and self._less(right, best):
-                best = right
-            if best == i:
-                return
-            self._swap(i, best)
-            i = best
+            child = 2 * i + 1
+            if child >= n:
+                break
+            right = child + 1
+            if right < n and data[right][0] < data[child][0]:
+                child = right
+            if data[child][0] < key:
+                data[i] = data[child]
+                i = child
+            else:
+                break
+        data[i] = entry
 
     # ------------------------------------------------------------ public API
     def push(self, key: float, item: T) -> None:
@@ -92,7 +96,7 @@ class _BinaryHeap(Generic[T]):
 
         Time: O(log n)   Space: O(1) amortized.
         """
-        self._data.append((float(key), item))
+        self._data.append((self._sign * key, item))
         self._sift_up(len(self._data) - 1)
 
     def pop(self) -> tuple[float, T]:
@@ -103,14 +107,17 @@ class _BinaryHeap(Generic[T]):
         Raises:
             IndexError: if the heap is empty.
         """
-        if not self._data:
+        data = self._data
+        if not data:
             raise IndexError("pop from empty heap")
-        top = self._data[0]
-        last = self._data.pop()
-        if self._data:
-            self._data[0] = last
+        last = data.pop()
+        if data:
+            top = data[0]
+            data[0] = last
             self._sift_down(0)
-        return top
+        else:
+            top = last
+        return self._sign * top[0], top[1]
 
     def peek(self) -> tuple[float, T]:
         """Return the top ``(key, item)`` without removing it.
@@ -122,7 +129,12 @@ class _BinaryHeap(Generic[T]):
         """
         if not self._data:
             raise IndexError("peek from empty heap")
-        return self._data[0]
+        k, v = self._data[0]
+        return self._sign * k, v
+
+    def peek_key(self) -> float:
+        """Only the top key (slightly faster than ``peek()[0]``). O(1)."""
+        return self._sign * self._data[0][0]
 
     def pushpop(self, key: float, item: T) -> tuple[float, T]:
         """Push then pop in one step (faster than doing both separately).
@@ -132,20 +144,23 @@ class _BinaryHeap(Generic[T]):
 
         Time: O(log n)   Space: O(1).
         """
-        key = float(key)
-        if self._data and self._sign * self._data[0][0] < self._sign * key:
-            top = self._data[0]
-            self._data[0] = (key, item)
+        s = self._sign
+        sk = s * float(key)
+        data = self._data
+        if data and data[0][0] < sk:
+            top = data[0]
+            data[0] = (sk, item)
             self._sift_down(0)
-            return top
-        return key, item
+            return s * top[0], top[1]
+        return float(key), item
 
     def to_sorted_list(self) -> list[tuple[float, T]]:
         """Return all entries ordered from top to bottom (heap is unchanged).
 
         Time: O(n log n)   Space: O(n).
         """
-        return sorted(self._data, key=lambda e: self._sign * e[0])
+        s = self._sign
+        return [(s * k, v) for k, v in sorted(self._data, key=lambda e: e[0])]
 
     def __len__(self) -> int:
         """Number of entries. O(1)."""
@@ -157,7 +172,8 @@ class _BinaryHeap(Generic[T]):
 
     def __iter__(self) -> Iterator[tuple[float, T]]:
         """Iterate in internal (array) order, NOT sorted order. O(n)."""
-        return iter(self._data)
+        s = self._sign
+        return ((s * k, v) for k, v in self._data)
 
     def __repr__(self) -> str:
         return f"{type(self).__name__}(size={len(self)})"
@@ -175,6 +191,7 @@ class MinHeap(_BinaryHeap[T]):
 class MaxHeap(_BinaryHeap[T]):
     """Binary max-heap: ``peek()`` / ``pop()`` give the largest key.
 
+    Stores negated keys in a min-heap internally.
     push O(log n), pop O(log n), peek O(1), space O(n).
     """
 
@@ -196,11 +213,11 @@ def k_smallest(keys: np.ndarray | list[float], items: Any, k: int) -> list[tuple
     """
     if k <= 0:
         return []
+    keys = keys.tolist() if isinstance(keys, np.ndarray) else list(keys)
     heap: MaxHeap[Any] = MaxHeap()
-    for i in range(len(keys)):
-        key = float(keys[i])
+    for i, key in enumerate(keys):
         if len(heap) < k:
             heap.push(key, items[i])
-        elif key < heap.peek()[0]:
+        elif key < heap.peek_key():
             heap.pushpop(key, items[i])
     return list(reversed(heap.to_sorted_list()))
