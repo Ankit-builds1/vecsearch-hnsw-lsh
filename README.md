@@ -225,11 +225,15 @@ where our Python HNSW beats NumPy brute force is around 10K vectors.
 
 ## Screenshots
 
-**Semantic search with HNSW** (query: "space mission to mars")
+**Semantic search with HNSW** (query: "mission to mars"). Each result is coloured by its news category.
 
 ![search results](docs/screenshots/app_search.jpg)
 
-**Comparing the three indexes on the same query**
+**Headline map**: all 5,000 headline vectors projected to 2-D, with the query and its nearest neighbours
+
+![headline map](docs/screenshots/app_map.jpg)
+
+**Comparing the three indexes on the same query**: time, headlines checked and recall vs exact search
 
 ![index comparison](docs/screenshots/app_comparison.jpg)
 

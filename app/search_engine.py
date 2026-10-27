@@ -181,6 +181,32 @@ class SearchEngine:
     embeddings: np.ndarray
     indexes: dict[str, BaseIndex] = field(default_factory=dict)
     build_times: dict[str, float] = field(default_factory=dict)
+    last_checked: int = 0
+    _proj: tuple[np.ndarray, np.ndarray, np.ndarray] | None = field(default=None, repr=False)
+
+    def vectors_checked(self, q: np.ndarray, index_name: str, k: int = 10, ef: int | None = None) -> int:
+        """How many stored vectors the index compared with the query (its real work)."""
+        index = self.indexes[index_name]
+        if isinstance(index, HNSWIndex):
+            index.distance_count = 0
+            index.search(q, k, ef=ef)
+            return index.distance_count
+        if isinstance(index, LSHIndex):
+            return int(len(index.candidates(q)))
+        return len(index)
+
+    def projection(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """2-D PCA of all embeddings, for the headline map.
+
+        Returns (points (n, 2), mean (d,), components (d, 2)) so queries can be
+        projected the same way. Computed once with an SVD.
+        """
+        if self._proj is None:
+            mean = self.embeddings.mean(axis=0)
+            _, _, vt = np.linalg.svd(self.embeddings - mean, full_matrices=False)
+            comps = vt[:2].T
+            self._proj = ((self.embeddings - mean) @ comps, mean, comps)
+        return self._proj
 
     def embed_query(self, query: str) -> np.ndarray:
         return self.embedder.encode([query])[0]
@@ -208,6 +234,7 @@ class SearchEngine:
                 ids, dists = index.search(q, k)
             times.append(time.perf_counter() - t0)
         ms = float(np.median(times)) * 1000
+        self.last_checked = self.vectors_checked(q, index_name, k, ef)
         hits = [SearchHit(r + 1, self.corpus.texts[i], self.corpus.labels[i], 1.0 - float(d))
                 for r, (i, d) in enumerate(zip(ids.tolist(), dists.tolist()))]
         return hits, ms
