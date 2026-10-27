@@ -1,0 +1,14 @@
+"""VecSearch - vector similarity search from scratch (Python + NumPy).
+
+Indexes:
+    BruteForceIndex  exact search, used as ground truth
+    LSHIndex         random hyperplane locality sensitive hashing
+    HNSWIndex        hierarchical navigable small world graph
+"""
+
+from .base import BaseIndex
+from .brute_force import BruteForceIndex
+from .heap import MaxHeap, MinHeap
+
+__all__ = ["BaseIndex", "BruteForceIndex", "MaxHeap", "MinHeap"]
+__version__ = "0.1.0"
