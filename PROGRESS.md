@@ -71,3 +71,11 @@
 - Verified in the browser: app launches, no server errors, queries return relevant results.
   Screenshots in `docs/screenshots/`.
 - Tests: `tests/test_search_engine.py` (offline embedder). Total 94 tests passing.
+
+## Stage 7 - HNSW visualization notebook (done)
+- `notebooks/hnsw_visualization.ipynb` (executed, outputs saved): 300 random 2-D points, M=4.
+  1. nodes per layer vs theory n / M^l (observed 300, 69, 17, 5, 2 vs expected 300, 75, 19, 5, 1)
+  2. the graph drawn on every layer
+  3. search path of one query: greedy descent through the layers + beam expansion on layer 0
+  4. effect of ef_search on recall and work (done in 16-D because 2-D is too easy: recall is 1.0
+     even at the smallest beam). Recall 0.70 (ef=10) -> 0.97 (ef=50) -> 1.00 (ef=200).
