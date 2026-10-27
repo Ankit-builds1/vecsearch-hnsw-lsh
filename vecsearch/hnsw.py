@@ -82,6 +82,8 @@ class HNSWIndex(BaseIndex):
         self._levels: list[int] = []
         self._entry: int | None = None
         self._max_level: int = -1
+        # how many query-to-node distances were computed (for benchmarks; reset freely)
+        self.distance_count = 0
 
     # ================================================================ helpers
     def _random_level(self) -> int:
@@ -96,6 +98,7 @@ class HNSWIndex(BaseIndex):
         lists are short (<= 2M rows) and it needs fewer numpy calls than the
         norm expansion in ``euclidean_batch``.
         """
+        self.distance_count += len(nodes)
         X = self._store.data[nodes]
         if self.metric == "l2":
             diff = X - q

@@ -41,3 +41,18 @@
   same graph as building it in one go.
 - Tests: round trip for all three indexes, add-after-load, empty index, custom ids,
   wrong class / missing files / bad version errors. Total: 87 tests passing.
+
+## Stage 5 - Benchmarks (done)
+- `benchmarks/run_benchmarks.py`: BruteForce / LSH / HNSW (ours) vs FAISS Flat / LSH / HNSW.
+  FAISS pinned to 1 thread and queried one vector at a time (same conditions as ours).
+  Measures build time, QPS, Recall@10, distance computations per query, memory, disk size.
+- Experiments: main table, HNSW sweep (M x ef_search), LSH sweep (L x K), FAISS HNSW ef sweep,
+  scaling up to n = 50K (synthetic clustered 128-d, since SIFT-10K only has 10K vectors).
+- Outputs in `benchmarks/results/`: 5 CSVs, `summary.json`, 5 PNG charts. `--charts-only` redraws charts.
+- Key numbers (SIFT-10K): HNSW Recall@10 0.999 (ef=50) / 1.000 (ef>=80) using ~650 distance
+  computations per query instead of 10,000. FAISS HNSW 0.995 at the same settings. Our LSH 0.959
+  (L=16,K=12) up to 0.997 (L=32,K=12); FAISS LSH 0.691.
+- Scaling: brute force is faster below ~10K vectors (one BLAS call vs python overhead), at 50K our
+  HNSW is ~2x faster than brute force with recall 0.998 while computing ~1% of the distances.
+- Issue found + fixed: the first run had noisy single-shot timings and stopped at n=10K. Now best of 3
+  repeats, and scaling goes to 50K.

@@ -1,0 +1,87 @@
+{
+  "dataset": "SIFT-10K",
+  "n": 10000,
+  "dim": 128,
+  "n_queries": 100,
+  "k": 10,
+  "quick": false,
+  "python": "3.12.10",
+  "machine": "Intel64 Family 6 Model 154 Stepping 3, GenuineIntel",
+  "faiss": "1.15.1",
+  "total_runtime_s": 330.6,
+  "comparison": [
+    {
+      "method": "BruteForce",
+      "library": "VecSearch (ours)",
+      "build_s": 0.0035,
+      "qps": 1372.5253,
+      "latency_ms": 0.7286,
+      "recall@10": 1.0,
+      "dist_per_query": 10000.0,
+      "memory_mb": 8.3444,
+      "disk_mb": 4.9597
+    },
+    {
+      "method": "LSH (L=16, K=12)",
+      "library": "VecSearch (ours)",
+      "build_s": 0.0767,
+      "qps": 765.5836,
+      "latency_ms": 1.3062,
+      "recall@10": 0.959,
+      "dist_per_query": 1812.03,
+      "memory_mb": 18.3978,
+      "disk_mb": 5.7251
+    },
+    {
+      "method": "HNSW (M=16, ef=50)",
+      "library": "VecSearch (ours)",
+      "build_s": 44.0056,
+      "qps": 1064.9956,
+      "latency_ms": 0.939,
+      "recall@10": 0.999,
+      "dist_per_query": 652.27,
+      "memory_mb": 11.7902,
+      "disk_mb": 5.8092
+    },
+    {
+      "method": "FAISS Flat",
+      "library": "FAISS",
+      "build_s": 0.0031,
+      "qps": 5202.6159,
+      "latency_ms": 0.1922,
+      "recall@10": 1.0,
+      "dist_per_query": 10000.0,
+      "memory_mb": 4.8829,
+      "disk_mb": 4.8829
+    },
+    {
+      "method": "FAISS LSH (1024 bits)",
+      "library": "FAISS",
+      "build_s": 0.1262,
+      "qps": 11510.6589,
+      "latency_ms": 0.0869,
+      "recall@10": 0.691,
+      "dist_per_query": NaN,
+      "memory_mb": 1.7208,
+      "disk_mb": 1.7208
+    },
+    {
+      "method": "FAISS HNSW (M=16, ef=50)",
+      "library": "FAISS",
+      "build_s": 0.9087,
+      "qps": 28464.8886,
+      "latency_ms": 0.0351,
+      "recall@10": 0.995,
+      "dist_per_query": 581.82,
+      "memory_mb": 6.2565,
+      "disk_mb": 6.2565
+    }
+  ],
+  "charts": [
+    "recall_vs_qps.png",
+    "hnsw_param_sweep.png",
+    "comparison_bars.png",
+    "scaling.png",
+    "lsh_sweep.png"
+  ]
+}
