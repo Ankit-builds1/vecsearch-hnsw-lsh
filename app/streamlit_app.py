@@ -25,17 +25,15 @@ st.set_page_config(page_title="VecSearch", page_icon="🧭", layout="wide",
                    initial_sidebar_state="expanded")
 
 # ---------------------------------------------------------------- design tokens
-INK = "#14213D"
-MUTED = "#5B6478"
-ACCENT = "#2A78D6"
-CATEGORY_COLORS = {          # identity colours, always shown next to the category name
-    "World": "#2A78D6",
-    "Sports": "#1BAF7A",
-    "Business": "#EDA100",
-    "Sci/Tech": "#E87BA4",
+INK = "#E8ECF7"          # light text on the dark indigo background
+MUTED = "#A9B4D0"
+CATEGORY_COLORS = {      # identity colours (dark-mode steps), always shown next to the category name
+    "World": "#3987E5",
+    "Sports": "#1BC48A",
+    "Business": "#F0B020",
+    "Sci/Tech": "#EE7FAA",
 }
-INDEX_COLORS = {"HNSW": "#2A78D6", "LSH": "#1BAF7A", "BruteForce": "#EB6834"}
-BANNER = "#1B2559"
+INDEX_COLORS = {"HNSW": "#3987E5", "LSH": "#1BC48A", "BruteForce": "#F07A45"}
 
 
 def tint(hex_color: str, alpha: float) -> str:
@@ -55,7 +53,13 @@ CSS = """
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,400;6..72,600&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root { --ink: #14213D; --muted: #5B6478; --accent: #2A78D6; --line: #D8DEE8; --surface: #FFFFFF; }
+:root { --ink: #E8ECF7; --muted: #A9B4D0; --accent: #5B9BEA; --line: #2E3B78; --surface: #18214A; }
+/* deep indigo night background with two soft colour glows */
+.stApp { background:
+  radial-gradient(900px 500px at 85% -10%, rgba(238,127,170,.16), transparent 60%),
+  radial-gradient(900px 600px at 10% 0%, rgba(57,135,229,.22), transparent 60%),
+  #0F1533; }
+header[data-testid="stHeader"] { background: transparent; }
 
 .stApp :is(p, li, label, input, textarea, button, td, th),
 .stApp div[data-testid="stMarkdownContainer"] { font-family: "Public Sans", system-ui, sans-serif; }
@@ -63,7 +67,8 @@ CSS = """
 .block-container { padding-top: 2.2rem; max-width: 1180px; }
 
 /* masthead: indigo banner with the four category colours as a strip */
-.vs-masthead { background: #1B2559; border-radius: 18px; padding: 2rem 2.2rem 1.6rem; margin-bottom: 1.2rem; position: relative; overflow: hidden; }
+.vs-masthead { background: linear-gradient(135deg, #24327A 0%, #1B2559 60%, #2A2466 100%);
+  border: 1px solid #34449A; border-radius: 18px; padding: 2rem 2.2rem 1.6rem; margin-bottom: 1.2rem; position: relative; overflow: hidden; }
 .vs-masthead h1 {
   font-family: "Newsreader", Georgia, serif; font-weight: 600; font-size: 3.6rem;
   line-height: 1.02; letter-spacing: -0.02em; color: #FFFFFF; margin: 0 0 .5rem 0; padding: 0;
@@ -81,7 +86,8 @@ div[data-testid="stTextInput"] input {
   font-size: 1.3rem; padding: .95rem 1.1rem; border-radius: 12px;
   border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
 }
-div[data-testid="stTextInput"] input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(42,120,214,.18); }
+div[data-testid="stTextInput"] input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(91,155,234,.30); }
+div[data-testid="stTextInput"] input::placeholder { color: #7E8AAE; }
 
 /* example queries as quiet chips */
 div[data-testid="stHorizontalBlock"] button[kind="secondary"] {
@@ -102,12 +108,12 @@ div[data-testid="stHorizontalBlock"] button[kind="secondary"]:hover { border-col
 .vs-meta { display: flex; align-items: center; gap: .8rem; margin-top: .4rem; font-size: .86rem; color: var(--muted); }
 .vs-cat { display: inline-flex; align-items: center; gap: .4rem; }
 .vs-cat i { width: .62rem; height: .62rem; border-radius: 50%; background: var(--cat); display: inline-block; }
-.vs-bar { flex: 0 0 120px; height: 6px; border-radius: 3px; background: rgba(20,33,61,.10); overflow: hidden; }
+.vs-bar { flex: 0 0 120px; height: 6px; border-radius: 3px; background: rgba(255,255,255,.12); overflow: hidden; }
 .vs-bar span { display: block; height: 100%; background: var(--cat); border-radius: 3px; }
 
 /* tabs */
 div[data-baseweb="tab-list"] button p { font-size: 1rem; font-weight: 500; }
-section[data-testid="stSidebar"] { background: #E6EBF5; }
+section[data-testid="stSidebar"] { background: #141C42; border-right: 1px solid #263270; }
 
 .vs-empty { padding: 2.2rem 0 1rem; color: var(--muted); font-size: 1.05rem; max-width: 60ch; }
 .vs-note { color: var(--muted); font-size: .9rem; max-width: 75ch; }
@@ -212,7 +218,7 @@ with tab_results:
             color = CATEGORY_COLORS.get(h.label, MUTED)
             width = max(0.0, min(1.0, h.similarity)) * 100
             rows.append(
-                f'<div class="vs-result" style="--cat:{color};--tint:{tint(color, 0.08)}">'
+                f'<div class="vs-result" style="--cat:{color};--tint:{tint(color, 0.16)}">'
                 f'<div class="vs-rank">{h.rank}</div><div>'
                 f'<div class="vs-headline">{html.escape(h.text)}</div>'
                 f'<div class="vs-meta"><span class="vs-cat" style="--cat:{color}"><i></i>{h.label}</span>'
@@ -228,7 +234,8 @@ with tab_map:
                        "category": engine.corpus.labels})
     color = alt.Color("category:N", title="Category",
                       scale=alt.Scale(domain=list(CATEGORY_COLORS), range=list(CATEGORY_COLORS.values())),
-                      legend=alt.Legend(orient="top", direction="horizontal", titleOrient="left"))
+                      legend=alt.Legend(orient="top", direction="horizontal", titleOrient="left",
+                                        symbolOpacity=1, symbolSize=120, labelFontSize=13))
     base = (alt.Chart(df).mark_circle(size=14, opacity=0.38)
             .encode(x=alt.X("x:Q", axis=None), y=alt.Y("y:Q", axis=None), color=color,
                     tooltip=["headline:N", "category:N"]))
@@ -283,7 +290,7 @@ with tab_compare:
         def bars(col: str, title: str, fmt: str) -> alt.LayerChart:
             b = alt.Chart(cmp_df).encode(
                 y=alt.Y("Index:N", sort=list(INDEX_NAMES), title=None),
-                x=alt.X(f"{col}:Q", title=None, axis=alt.Axis(grid=True, gridColor="#E3E8F0")))
+                x=alt.X(f"{col}:Q", title=None, axis=alt.Axis(grid=True, gridColor="#2E3B78")))
             idx_color = alt.Color("Index:N", legend=None, scale=alt.Scale(
                 domain=list(INDEX_COLORS), range=list(INDEX_COLORS.values())))
             return (b.mark_bar(size=18, cornerRadiusEnd=4).encode(color=idx_color)
