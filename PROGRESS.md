@@ -79,3 +79,14 @@
   3. search path of one query: greedy descent through the layers + beam expansion on layer 0
   4. effect of ef_search on recall and work (done in 16-D because 2-D is too easy: recall is 1.0
      even at the smallest beam). Recall 0.70 (ef=10) -> 0.97 (ef=50) -> 1.00 (ef=200).
+
+## Stage 8 - Documentation (done)
+- Final full benchmark run; main table now shows best-accuracy settings too (HNSW ef=100 -> recall 1.000,
+  LSH L=32 K=12 -> 0.997). The HNSW sweep was re-run with 5 timing repeats because one run had CPU
+  noise (added `--only` flag to re-run single experiments, `--out` to write elsewhere).
+- `README.md`: overview, two mermaid diagrams (architecture + HNSW query flow), setup, usage,
+  full results tables + charts, screenshots.
+- `docs/REPORT.md`: abstract, introduction, problem statement, data structures, algorithms with
+  complexity tables, implementation, results (6 subsections with real numbers), conclusion,
+  future scope, 10 references.
+- `docs/VIVA_NOTES.md`: 35 questions with short answers.

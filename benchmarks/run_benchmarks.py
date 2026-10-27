@@ -227,7 +227,7 @@ def run_hnsw_sweep(ds: Dataset, quick: bool) -> pd.DataFrame:
         idx.add(ds.base)
         build = time.perf_counter() - t0
         for ef in efs:
-            found, qps = time_queries(lambda q: idx.search(q, K, ef=ef)[0], ds.queries, repeats=3)
+            found, qps = time_queries(lambda q: idx.search(q, K, ef=ef)[0], ds.queries, repeats=5)
             idx.distance_count = 0
             for q in ds.queries:
                 idx.search(q, K, ef=ef)
@@ -496,8 +496,15 @@ def main() -> None:
     ap.add_argument("--quick", action="store_true", help="smaller parameter sweeps")
     ap.add_argument("--synthetic", action="store_true", help="skip SIFT, use synthetic data")
     ap.add_argument("--charts-only", action="store_true", help="redraw charts from the saved CSVs")
+    ap.add_argument("--only", nargs="+", choices=["main", "hnsw", "lsh", "faiss", "scaling"],
+                    help="re-run only these experiments, reuse the saved CSVs for the rest")
+    ap.add_argument("--out", type=Path, default=None,
+                    help="write results to this folder instead of benchmarks/results")
     args = ap.parse_args()
 
+    global RESULTS
+    if args.out is not None:
+        RESULTS = args.out.resolve()
     RESULTS.mkdir(parents=True, exist_ok=True)
     if args.charts_only:
         summary = json.loads((RESULTS / "summary.json").read_text(encoding="utf-8"))
@@ -511,23 +518,25 @@ def main() -> None:
     print(ds)
     t_all = time.perf_counter()
 
-    print("[1/5] main comparison")
-    main_df = run_main(ds, args.quick)
-    print("[2/5] HNSW parameter sweep")
-    sweep_df = run_hnsw_sweep(ds, args.quick)
-    print("[3/5] LSH sweep")
-    lsh_df = run_lsh_sweep(ds, args.quick)
-    print("[4/5] FAISS HNSW sweep")
-    fh_df = run_faiss_hnsw_sweep(ds, args.quick)
-    print("[5/5] scaling with n")
-    scaling_df, scaling_name = run_scaling(args.quick)
-
-    main_df.to_csv(RESULTS / "comparison.csv", index=False, float_format="%.4f")
-    sweep_df.to_csv(RESULTS / "hnsw_sweep.csv", index=False, float_format="%.4f")
-    lsh_df.to_csv(RESULTS / "lsh_sweep.csv", index=False, float_format="%.4f")
-    fh_df.to_csv(RESULTS / "faiss_hnsw_sweep.csv", index=False, float_format="%.4f")
-    scaling_df.to_csv(RESULTS / "scaling.csv", index=False, float_format="%.4f")
-    charts = make_charts(main_df, sweep_df, lsh_df, fh_df, scaling_df, ds.name, scaling_name)
+    # each experiment: (key, csv file, function). With --only, the others are read from disk.
+    experiments = [
+        ("main", "comparison.csv", lambda: run_main(ds, args.quick)),
+        ("hnsw", "hnsw_sweep.csv", lambda: run_hnsw_sweep(ds, args.quick)),
+        ("lsh", "lsh_sweep.csv", lambda: run_lsh_sweep(ds, args.quick)),
+        ("faiss", "faiss_hnsw_sweep.csv", lambda: run_faiss_hnsw_sweep(ds, args.quick)),
+        ("scaling", "scaling.csv", lambda: run_scaling(args.quick)[0]),
+    ]
+    frames = {}
+    for i, (key, csv_name, fn) in enumerate(experiments, 1):
+        if args.only and key not in args.only:
+            frames[key] = pd.read_csv(RESULTS / csv_name)
+            continue
+        print(f"[{i}/{len(experiments)}] {key}")
+        frames[key] = fn()
+        frames[key].to_csv(RESULTS / csv_name, index=False, float_format="%.4f")
+    main_df = frames["main"]
+    charts = make_charts(main_df, frames["hnsw"], frames["lsh"], frames["faiss"], frames["scaling"],
+                         ds.name, "synthetic clustered 128-d data")
 
     summary = {
         "dataset": ds.name, "n": int(ds.base.shape[0]), "dim": int(ds.base.shape[1]),
