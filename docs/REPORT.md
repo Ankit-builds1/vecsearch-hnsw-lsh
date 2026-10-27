@@ -3,6 +3,8 @@
 **Course:** Data Structures and Algorithms - Project Report
 **Author:** Ankit Dash
 **Tools:** Python 3.12, NumPy (core), pytest, FAISS (only for comparison), Streamlit, sentence-transformers
+**Live demo:** https://vecsearch-ankit.streamlit.app/
+**Source code:** https://github.com/Ankit-builds1/vecsearch-hnsw-lsh
 
 ---
 
@@ -350,3 +352,7 @@ large speed gap comes from C++/SIMD versus interpreted Python, not from the algo
 9. T. H. Cormen, C. E. Leiserson, R. L. Rivest and C. Stein, *Introduction to Algorithms*, 3rd ed., MIT Press, 2009
    (heaps, amortized analysis of dynamic arrays, hashing).
 10. W. Pugh, "Skip lists: a probabilistic alternative to balanced trees," *Communications of the ACM*, 1990.
+
+---
+
+Copyright © 2026 Ankit Dash. All rights reserved.

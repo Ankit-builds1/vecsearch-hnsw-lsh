@@ -1,0 +1,24 @@
+Copyright (c) 2026 Ankit Dash. All rights reserved.
+
+VecSearch - Vector Similarity Search Engine
+https://github.com/Ankit-builds1/vecsearch-hnsw-lsh
+
+This software, its source code, documentation, report, benchmark results and
+demo application are the original work of Ankit Dash, created as a Data
+Structures and Algorithms course project.
+
+You may view and read this repository and use the hosted demo. No part of this
+work may be copied, modified, redistributed, published, or submitted as
+academic coursework by anyone else without the prior written permission of
+the copyright holder.
+
+Third-party components keep their own licences and are not covered by this
+notice, including: the SIFT-10K dataset (INRIA TEXMEX corpus), the AG News
+dataset, the all-MiniLM-L6-v2 model (sentence-transformers), and FAISS (Meta),
+which is used only for benchmark comparison.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHOR BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY ARISING FROM THE
+USE OF THE SOFTWARE.
