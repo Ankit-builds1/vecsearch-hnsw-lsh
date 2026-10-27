@@ -32,3 +32,12 @@
   Target (>= 0.90) met without extra tuning.
 - Bug found in a test (queries drawn from different clusters than the data) and fixed.
 - Total: 73 tests passing (includes a SIFT-10K recall test, skipped if data is missing).
+
+## Stage 4 - Persistence (done)
+- `persistence.py`: index saved as a folder: `header.json` (class, version, params),
+  `arrays.npz` (numpy arrays, loaded with `allow_pickle=False`), `structure.pkl`
+  (HNSW layers / LSH buckets / RNG state). `index.save(path)` / `Cls.load(path)`.
+- RNG state is saved, so an HNSW index can be loaded and extended and gives exactly the
+  same graph as building it in one go.
+- Tests: round trip for all three indexes, add-after-load, empty index, custom ids,
+  wrong class / missing files / bad version errors. Total: 87 tests passing.
